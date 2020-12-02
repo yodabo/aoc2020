@@ -34,3 +34,4 @@
 bazel-aoc2020/
 bazel-bin/
 bazel-out/
+.vscode
