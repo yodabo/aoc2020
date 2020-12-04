@@ -3,6 +3,7 @@
 #include <set>
 #include <iostream>
 #include <fstream>
+#include <regex>
 #include <sstream>
 using namespace std;
 
@@ -24,11 +25,45 @@ bool CheckCurrent(Passport current) {
   return current.byr&&current.iyr&&current.eyr&&current.hgt&&current.hcl&&current.ecl&&current.pid;
 }
 
+bool CheckYear(string value, int min, int max) {
+  int year = atoi(value.data());
+   return value.length() == 4 && year >= min && year <= max;
+}
+
+void VerifyValue(string field, string value, Passport* p) {
+  if (field == "byr") {
+    p->byr = CheckYear(value, 1920, 2002);
+  } else if (field == "iyr") {
+    p->iyr = CheckYear(value, 1920, 2020);
+  } else if (field == "eyr") {
+    p->eyr = CheckYear(value, 2020, 2030);
+  } else if (field == "hgt") {
+    std::istringstream stream(value);
+    int num;
+    string unit;
+    stream>>num>>unit;
+    if (unit == "cm") {
+      p->hgt = num <= 193 && num >= 150;
+    }
+    if (unit == "in") {
+      p->hgt = num <= 76 && num >= 59;
+    }
+  } else if (field == "hcl") {
+    p->hcl = regex_match(value, regex("^#[0-9a-f]{6}$"));
+  } else if (field == "ecl") {
+    p->ecl = (value == "brn" || value=="amb" || value=="blu" || value=="gry" || value=="grn" || value=="hzl" || value=="oth");
+  } else if (field == "pid") {
+    // 9 digits, including leading zeros
+    p->pid = regex_match(value, regex("^[0-9]{9}$"));
+  } else if (field == "cid") {
+  }
+}
+
 int main(int argc, char** argv) {
   // When building on Windows replace this path with the absolute path of input.txt in the source folder.
   // On Windows, apparently bazel doesn't set up symlinks, so we can't access these automatically.
   // https://groups.google.com/g/bazel-discuss/c/Po8xN8dhWkI/m/sWPUYV9YBAAJ (I may have a bug in BUILD files myself).
-  std::ifstream input(R"(day3/input.txt)");
+  std::ifstream input(R"(day4/input.txt)");
   std::string line;
 
   int numCurrent = 0;
@@ -41,64 +76,17 @@ int main(int argc, char** argv) {
       cout<<endl;
     }
 
-    string part;
-    std::istringstream stream(line);
-    while (stream>>part) {
-      cout<<part<<endl;
-      // part is prefix:suffix
-      if (part[0] == 'b') {
-        std::istringstream stream(part.data()+4);
-        int num;
-        stream>>num;
-        cout<<"byr: "<<num<<endl;
-        current.byr = num <= 2002 && num >= 1920;
+    istringstream stream(line);
+    string component;
+    while (stream >> component) {
+      // This is expected to be something like "foo:bar".  Split to get each part.
+      string field;
+      string value;
+      istringstream f(component);
+      if (getline(f, field, ':') && getline(f, value)) {
+        cout<<"field: " << field<<" value: "<<value<<endl;
+        VerifyValue(field, value, &current);
       }
-      if (part[0] == 'i') {
-        std::istringstream stream(part.data() + 4);
-        int num;
-        stream>>num;
-        current.iyr = num <= 2020 && num >= 2010;
-      }
-      if (part[0] == 'e' && part[1] == 'y') {
-        std::istringstream stream(part.data() + 4);
-        int num;
-        stream>>num;
-        current.eyr = num <= 2030 && num >= 2020;
-      }
-      if (part[1] == 'g') {
-        std::istringstream stream(part.data()+4);
-        int num;
-        string unit;
-        stream>>num>>unit;
-        if (unit == "cm") {
-          current.hgt = num <= 193 && num >= 150;
-        }
-        if (unit == "in") {
-          current.hgt = num <= 76 && num >= 59;
-        }
-      }
-      if (part[0] == 'h' && part[1] == 'c') {
-        if (part.length() == 4+1+6 && part[4] == '#') {
-          bool good = true;
-          for (int i = 0; i < 6; ++i) {
-            good = (part[5+i] <= '9' && part[5+1] >= '0') || (part[5+i] <= 'f' && part[5+i] >= 'a');
-          }
-          current.hcl = good;
-        }
-      }
-      if (part[0] == 'e' && part[1] == 'c') {
-        current.ecl = (part == "ecl:brn" || part=="ecl:amb" || part=="ecl:blu" || part=="ecl:gry" || part=="ecl:grn" || part=="ecl:hzl" || part=="ecl:oth");
-      }
-      if (part[0] == 'p') { 
-        if (part.length() == 4+9) {
-          bool good = true;
-          for (int i = 0; i < 6; ++i) {
-            good = (part[4+i] <= '9' && part[4+1] >= '0');
-          }
-          current.pid = good;
-        }
-      }
-      if (part[0] == 'c') current.cid = true;
     }
   }
   if (CheckCurrent(current)) numCurrent++;
