@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
 	// When building on Windows replace this path with the absolute path of input.txt in the source folder.
 	// On Windows, apparently bazel doesn't set up symlinks, so we can't access these automatically.
 	// https://groups.google.com/g/bazel-discuss/c/Po8xN8dhWkI/m/sWPUYV9YBAAJ (I may have a bug in BUILD files myself).
-	std::ifstream input(R"(C:\Users\William.000\projects\aoc2020\aoc2020\day10\input.txt)");
+	std::ifstream input(R"(day10/input.txt)");
 	std::string line;
 
 	std::vector<unsigned long long> nums;
@@ -32,12 +32,12 @@ int main(int argc, char** argv) {
 	nums.push_back(0);
 
 	unsigned long long part1 = 0;
-	while (!input.eof()) {
+	while (std::getline(input, line)) {
+		if (line.length() == 0) break;
+		std::istringstream stream(line);
 		unsigned long long num;
-		input>>num;
+		stream>>num;
 		nums.push_back(num);
-		
-		cout<<num<<endl;
 	}
 
 	std::sort(nums.begin(), nums.end());
@@ -48,7 +48,6 @@ int main(int argc, char** argv) {
 		unsigned long long diff = nums[i+1] - nums[i];
 		if (diff == 1) num1++;
 		if (diff == 3) num3++;
-		cout<<nums[i]<<endl;
 	}
 	cout<<num1 * num3<<endl;
 	nums.push_back(nums[nums.size() - 1]+3);
@@ -72,8 +71,6 @@ int main(int argc, char** argv) {
 		numWaysPP = numWaysP;
 		numWaysP = numWays;
 		numWays = numWaysCur;
-
-		cout<<"\t"<<nums[i+1]<<" "<<numWays<<endl;
 	}
 	cout<<numWays<<endl;
 
