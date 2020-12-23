@@ -6,7 +6,7 @@ filegroup(
 )
 
 cc_binary(
-    name = "day21",
+    name = "day22",
     srcs = ["main.cc"],
     data = [":input"],
 )
