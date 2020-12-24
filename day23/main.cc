@@ -16,20 +16,19 @@
 using namespace std;
 
 struct Node {
-	std::shared_ptr<Node> lower; // lower in value
-	std::shared_ptr<Node> next; // next in list
-	int value;
+	Node* next; // next in list
+	//int next_index;
 };
 
 void Part2() {
-	std::map<int, shared_ptr<Node>> nodes;
+	std::map<int, Node*> nodes;
 	std::vector<int> initial = { 3, 6, 8, 1, 9, 5, 7, 4, 2 };
-	shared_ptr<Node> previous;
-	shared_ptr<Node> first;
+	Node* node_storage = new Node[1000000];
+	Node* previous = nullptr;
+	Node* first = nullptr;
 	for (auto i : initial) {
-		auto node = make_shared<Node>();
-		if (!first) { first = node;}
-		node->value = i;
+		Node* node = &node_storage[i - 1];
+		if (!first) { first = node; }
 		if (previous) {
 			previous->next = node;
 		}
@@ -37,95 +36,80 @@ void Part2() {
 		previous = node;
 	}
 
-	// all nodes created, fix up lower
-	for (int i = 2; i <= 9; ++i) {
-		nodes[i]->lower = nodes[i-1];
-	}
-
-	nodes[1]->lower = nodes[9];
-
 	// // structure created except for node[1]->lower, and previous->next
 	for (int i = 10; i <= 1000000; ++i) {
-		auto node = make_shared<Node>();
-		node->value = i;
+		auto* node = &node_storage[i - 1];
 		previous->next = node;
-		if (i > 10)
-			node->lower = previous;
-		else
-			node->lower = nodes[9];
-
-		previous = node;
 		
+		previous = node;
+
 		// nodes[i] = node; // shouldn't be needed.
 	}
-	nodes[1]->lower = previous; // wrap when finding lower.
-
-	previous->next = first; // make it cycle.
 	
-	// now structure build up.
-	shared_ptr<Node> current = first;
-	for (int i = 0; i < 10000000; ++i) {
-		shared_ptr<Node> node = current;
+	previous->next = first; // make it cycle.
 
-		shared_ptr<Node> m = current->next;
-		shared_ptr<Node> n = m->next;
-		shared_ptr<Node> o = n->next;
+	// now structure build up.
+	Node* current = first;
+	for (int i = 0; i < 10000000; ++i) {
+		Node* node = current;
+
+		Node* m = current->next;
+		Node* n = m->next;
+		Node* o = n->next;
 
 		// remove these 3
 		current->next = o->next;
 
 		// insert after the one less than current.
-		shared_ptr<Node> insert = current->lower;
-		while (insert == m || insert == n || insert == o) { insert = insert->lower; }
+		Node* insert = (current == node_storage) ? &node_storage[1000000-1] : current - 1;
+		while (insert == m || insert == n || insert == o) {
+			insert = (insert == node_storage) ? &node_storage[1000000 - 1] : insert - 1;
+		}
 		o->next = insert->next;
 		insert->next = m;
 
 		current = current->next;
 	}
 
-	int64_t answer = (int64_t)nodes[1]->next->value * (int64_t)nodes[1]->next->next->value;
-	cout<<"Part2: "<<answer<<endl;
+	int64_t answer = (int64_t)(nodes[1]->next - node_storage + 1) * (int64_t)(nodes[1]->next->next - node_storage + 1);
+	cout << "Part2: " << answer << endl;
 }
 
 void Part1() {
-	std::map<int, shared_ptr<Node>> nodes;
+	std::map<int, Node*> nodes;
 	std::vector<int> initial = { 3, 6, 8, 1, 9, 5, 7, 4, 2 };
-	shared_ptr<Node> previous;
-	shared_ptr<Node> first;
+	Node* previous = nullptr;
+	Node* first = nullptr;
+	Node* node_storage = new Node[9];
 	for (auto i : initial) {
-		auto node = make_shared<Node>();
-		if (!first) { first = node;}
-		node->value = i;
+		Node* node = &node_storage[i - 1];
+		if (!first) { first = node; }
 		if (previous) {
 			previous->next = node;
 		}
 		nodes[i] = node;
 		previous = node;
 	}
-
-	// all nodes created, fix up lower
-	for (int i = 2; i <= 9; ++i) {
-		nodes[i]->lower = nodes[i-1];
-	}
-
-	nodes[1]->lower = nodes[9]; // lower wraps
-	previous->next = first; // make it cycle.
 	
-	// now structure build up.
-	shared_ptr<Node> current = first;
-	for (int i = 0; i < 100; ++i) {
-		shared_ptr<Node> node = current;
+	previous->next = first; // make it cycle.
 
-		shared_ptr<Node> m = current->next;
-		shared_ptr<Node> n = m->next;
-		shared_ptr<Node> o = n->next;
+	// now structure build up.
+	Node* current = first;
+	for (int i = 0; i < 100; ++i) {
+		Node* node = current;
+
+		Node* m = current->next;
+		Node* n = m->next;
+		Node* o = n->next;
 
 		// remove these 3
 		current->next = o->next;
 
 		// insert after the one less than current.
-		shared_ptr<Node> insert = current->lower;
-		while (insert == m || insert == n || insert == o) { insert = insert->lower; }
+		Node* insert = (current == node_storage) ? &node_storage[9 - 1] : current - 1;
+		while (insert == m || insert == n || insert == o) {
+			insert = (insert == node_storage) ? &node_storage[9 - 1] : insert - 1;
+		}
 		o->next = insert->next;
 		insert->next = m;
 
@@ -133,12 +117,12 @@ void Part1() {
 	}
 
 	{
-		shared_ptr<Node> node = nodes[1];
+		Node* node = nodes[1];
 		for (int i = 0; i < 8; ++i) {
 			node = node->next;
-			cout<<node->value;
+			cout<<(int)(node - node_storage + 1);
 		}
-		cout<<endl;
+		cout << endl;
 	}
 }
 
