@@ -16,62 +16,56 @@
 using namespace std;
 
 struct Node {
-	Node* next; // next in list
-	//int next_index;
+	Node* next;
 };
 
 void Part2() {
-	std::map<int, Node*> nodes;
 	std::vector<int> initial = { 3, 6, 8, 1, 9, 5, 7, 4, 2 };
-	Node* node_storage = new Node[1000000];
-	Node* previous = nullptr;
-	Node* first = nullptr;
+	int* node_storage = new int[1000001];
+	int previous_index = -1;
+	int first_index = -1;
 	for (auto i : initial) {
-		Node* node = &node_storage[i - 1];
-		if (!first) { first = node; }
-		if (previous) {
-			previous->next = node;
+		if (first_index < 0) { first_index = i; }
+		if (previous_index >= 0) {
+			node_storage[previous_index] = i;
 		}
-		nodes[i] = node;
-		previous = node;
+		previous_index = i;
 	}
 
 	// // structure created except for node[1]->lower, and previous->next
 	for (int i = 10; i <= 1000000; ++i) {
-		auto* node = &node_storage[i - 1];
-		previous->next = node;
-		
-		previous = node;
+		node_storage[previous_index] = i;
+		previous_index = i;
 
 		// nodes[i] = node; // shouldn't be needed.
 	}
 	
-	previous->next = first; // make it cycle.
+	node_storage[previous_index] = first_index;
 
 	// now structure build up.
-	Node* current = first;
+	int current_index = first_index;
 	for (int i = 0; i < 10000000; ++i) {
-		Node* node = current;
+		int node_index = current_index;
 
-		Node* m = current->next;
-		Node* n = m->next;
-		Node* o = n->next;
+		int m = node_storage[current_index];
+		int n = node_storage[m];
+		int o = node_storage[n];
 
 		// remove these 3
-		current->next = o->next;
+		node_storage[current_index] = node_storage[o];
 
 		// insert after the one less than current.
-		Node* insert = (current == node_storage) ? &node_storage[1000000-1] : current - 1;
-		while (insert == m || insert == n || insert == o) {
-			insert = (insert == node_storage) ? &node_storage[1000000 - 1] : insert - 1;
+		int insert_index = (current_index == 1) ? 1000000 : current_index - 1;
+		while (insert_index == m || insert_index == n || insert_index == o) {
+			insert_index = (insert_index == 1) ? 1000000 : insert_index - 1;
 		}
-		o->next = insert->next;
-		insert->next = m;
+		node_storage[o] = node_storage[insert_index];
+		node_storage[insert_index] = m;
 
-		current = current->next;
+		current_index = node_storage[current_index];
 	}
 
-	int64_t answer = (int64_t)(nodes[1]->next - node_storage + 1) * (int64_t)(nodes[1]->next->next - node_storage + 1);
+	int64_t answer = (int64_t)(node_storage[1]) * (int64_t)(node_storage[node_storage[1]]);
 	cout << "Part2: " << answer << endl;
 }
 
